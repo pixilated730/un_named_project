@@ -1,0 +1,372 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SystemDigitali — Contract Architecture</title>
+<style>
+  :root{
+    --ground:#f7f6f1; --panel:#ffffff; --line:#dfe3da; --ink:#1d2a22; --ink-soft:#66736b;
+    --accent:#1b6b3a; --accent-soft:#e3efe6; --money:#a8641a; --money-soft:#f6ebdc;
+    --danger:#b3261e; --chain:#2b5fa8; --chain-soft:#e6eefb;
+    --l-control:#efe7f7; --l-identity:#e6eefb; --l-commerce:#e3efe6; --l-money:#f6ebdc;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--ground);color:var(--ink)}
+  header{padding:18px 24px 6px}
+  h1{margin:0;font-size:22px;letter-spacing:.2px}
+  .sub{color:var(--ink-soft);font-size:13.5px;margin-top:4px}
+  .wrap{display:grid;grid-template-columns:1fr 360px;gap:16px;padding:12px 24px 28px}
+  @media (max-width:980px){.wrap{grid-template-columns:1fr}}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;box-shadow:0 2px 6px rgba(0,0,0,.05)}
+  .map{padding:10px}
+  svg{width:100%;height:auto;display:block}
+  .box{fill:var(--panel);stroke:var(--line);stroke-width:1.2;rx:10}
+  .box.active{stroke:var(--accent);stroke-width:3}
+  .box.hot{fill:var(--accent-soft)}
+  .box.ext{stroke-dasharray:4 3}
+  .lbl{font-size:12.5px;font-weight:700;fill:var(--ink);pointer-events:none}
+  .lbl2{font-size:10.5px;fill:var(--ink-soft);pointer-events:none}
+  .layer{font-size:11px;font-weight:700;letter-spacing:1.2px;fill:var(--ink-soft)}
+  .band{opacity:.55}
+  .wire{stroke:#c9d1c4;stroke-width:1;fill:none;opacity:0}
+  .wire.on{opacity:.9}
+  .edge{stroke:var(--accent);stroke-width:2.5;fill:none;stroke-linecap:round;stroke-dasharray:6 6;animation:dash 1s linear infinite}
+  .edge.money{stroke:var(--money)}
+  .edge.danger{stroke:var(--danger)}
+  @keyframes dash{to{stroke-dashoffset:-24}}
+  .dot{fill:var(--money);stroke:#fff;stroke-width:2}
+  .dot.info{fill:var(--accent)}
+  .dot.danger{fill:var(--danger)}
+  .side{padding:14px;display:flex;flex-direction:column;gap:10px}
+  .flows{display:flex;flex-wrap:wrap;gap:6px}
+  .chip{border:1px solid var(--line);background:var(--panel);border-radius:16px;padding:6px 11px;font-size:12.5px;cursor:pointer;color:var(--ink)}
+  .chip.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .ctl{display:flex;gap:6px;align-items:center}
+  button{border:0;border-radius:10px;padding:8px 12px;font-weight:700;cursor:pointer;background:var(--accent-soft);color:var(--accent)}
+  button.primary{background:var(--accent);color:#fff}
+  button:disabled{opacity:.45;cursor:default}
+  .log{flex:1;min-height:260px;max-height:420px;overflow:auto;border-top:1px solid var(--line);padding-top:8px;font-size:13px;line-height:1.35}
+  .step{padding:7px 8px;border-radius:8px;margin-bottom:4px;color:var(--ink-soft)}
+  .step.now{background:var(--accent-soft);color:var(--ink)}
+  .step.done{color:var(--ink)}
+  .step b{color:var(--accent)}
+  .step .amt{color:var(--money);font-weight:700}
+  .step .st{display:inline-block;font-size:11px;background:var(--chain-soft);color:var(--chain);border-radius:8px;padding:1px 6px;margin-left:4px}
+  .note{font-size:12px;color:var(--ink-soft)}
+  label.toggle{font-size:12.5px;color:var(--ink-soft);display:flex;gap:6px;align-items:center;cursor:pointer}
+  .legend{display:flex;gap:12px;font-size:11.5px;color:var(--ink-soft);flex-wrap:wrap}
+  .legend i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:4px;vertical-align:middle}
+</style>
+</head>
+<body>
+<nav style="display:flex;gap:14px;align-items:center;padding:10px 24px;border-bottom:1px solid #dfe3da;background:#fff;font-size:13.5px">
+  <a href="index.html" style="color:#1b6b3a;text-decoration:none;font-weight:700">un_named_project</a>
+  <span style="color:#c9d1c4">|</span>
+  <a href="index.html" style="color:#66736b;text-decoration:none">Overview</a>
+  <a href="contracts.html" style="color:#1b6b3a;text-decoration:none;font-weight:700">Contract layer</a>
+  <a href="engine.html" style="color:#66736b;text-decoration:none">Engine layer</a>
+  <a href="https://github.com/pixilated730/un_named_project/blob/main/WHITEPAPER.md" style="color:#66736b;text-decoration:none">White paper</a>
+</nav>
+<header>
+  <h1>SystemDigitali — the contract layer, animated</h1>
+  <div class="sub">15 contracts · one hub (ParamStore) · every arrow below is a real call in <code>contracts/src</code>. Pick a flow, press play, watch the money and the facts move.</div>
+</header>
+<div class="wrap">
+  <div class="card map">
+    <svg id="map" viewBox="0 0 1000 640" xmlns="http://www.w3.org/2000/svg" aria-label="contract map"></svg>
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 6px 0">
+      <label class="toggle"><input type="checkbox" id="wires"> show ParamStore wiring (who reads whom)</label>
+      <div class="legend">
+        <span><i style="background:var(--money)"></i>money</span>
+        <span><i style="background:var(--accent)"></i>fact / call</span>
+        <span><i style="background:var(--danger)"></i>dispute / veto</span>
+      </div>
+    </div>
+  </div>
+  <div class="card side">
+    <div class="flows" id="flows"></div>
+    <div class="ctl">
+      <button class="primary" id="play">▶ Play</button>
+      <button id="step">Step</button>
+      <button id="reset">Reset</button>
+      <span class="note" id="pos"></span>
+    </div>
+    <div class="note" id="flowNote"></div>
+    <div class="log" id="log"></div>
+  </div>
+</div>
+<script>
+// ---------- the map: contracts as boxes in four layers ----------
+var BOXES = {
+  gov:   {x:30,  y:60,  w:200,h:54,name:'Governance',       sub:'stages · timelock · pause',   layer:'control'},
+  params:{x:262, y:60,  w:200,h:54,name:'ParamStore',       sub:'THE HUB — every address',     layer:'control'},
+  tgOps: {x:494, y:60,  w:220,h:54,name:'TreasuryGovernor', sub:'ops treasury · 72h velocity', layer:'control'},
+  tgCom: {x:746, y:60,  w:224,h:54,name:'TreasuryGovernor', sub:'community treasury',          layer:'control'},
+  ns:    {x:30,  y:190, w:176,h:54,name:'NamespaceRegistry',sub:'apps · stake · scopes',       layer:'identity'},
+  actors:{x:222, y:190, w:176,h:54,name:'ActorRegistry',    sub:'actorId → key',               layer:'identity'},
+  schema:{x:414, y:190, w:176,h:54,name:'SchemaRegistry',   sub:'what a claim means',          layer:'identity'},
+  atts:  {x:606, y:190, w:176,h:54,name:'AttestationRegistry',sub:'the claims · bonds',        layer:'identity'},
+  recov: {x:798, y:190, w:172,h:54,name:'KeyRecovery',      sub:'lost phone ≠ lost life',      layer:'identity'},
+  list:  {x:30,  y:320, w:200,h:54,name:'ListingRegistry',  sub:'what is for sale',            layer:'commerce'},
+  escrow:{x:262, y:320, w:220,h:54,name:'AgreementEscrow',  sub:'lock · fulfil · waterfall',   layer:'commerce'},
+  disp:  {x:514, y:320, w:200,h:54,name:'DisputeResolver',  sub:'arbiter quorum',              layer:'commerce'},
+  pools: {x:746, y:320, w:224,h:54,name:'FundingPools',     sub:'capped-return capital',       layer:'commerce'},
+  vault: {x:30,  y:450, w:200,h:54,name:'UserVault',        sub:'per-actor custody · signed', layer:'money'},
+  groups:{x:262, y:450, w:220,h:54,name:'CommunityGroups',  sub:'chamas · quorum treasuries',  layer:'money'},
+  dues:  {x:514, y:450, w:200,h:54,name:'MemberDues',       sub:'namespace dues',              layer:'money'},
+  token: {x:746, y:450, w:224,h:54,name:'cKES / USDT',      sub:'ERC-20 (external)',           layer:'money', ext:true},
+  buyer: {x:60,  y:572, w:150,h:40,name:'Buyer phone',      sub:'device key',                  layer:'actors', ext:true},
+  seller:{x:250, y:572, w:150,h:40,name:'Seller key',       sub:'device key',                  layer:'actors', ext:true},
+  treas: {x:440, y:572, w:150,h:40,name:'Treasury',         sub:'multisig',                    layer:'actors', ext:true},
+  root:  {x:630, y:572, w:150,h:40,name:'Root multisig',    sub:'company',                     layer:'actors', ext:true},
+  member:{x:820, y:572, w:150,h:40,name:'Members',          sub:'device keys',                 layer:'actors', ext:true}
+};
+var LAYERS = [
+  {key:'control', y:36,  h:96, label:'CONTROL', fill:'var(--l-control)'},
+  {key:'identity',y:166, h:96, label:'IDENTITY', fill:'var(--l-identity)'},
+  {key:'commerce',y:296, h:96, label:'COMMERCE', fill:'var(--l-commerce)'},
+  {key:'money',   y:426, h:96, label:'MONEY', fill:'var(--l-money)'}
+];
+// who reads whom through ParamStore (from the source survey)
+var WIRES = {
+  actors:['gov','ns','recov'],
+  escrow:['actors','atts','disp','pools','gov','list','ns','token','treas','vault'],
+  atts:['actors','gov','ns','schema','token'],
+  groups:['actors','gov','ns','token','vault'],
+  disp:['escrow','gov','list'],
+  pools:['actors','atts','escrow','ns','token'],
+  gov:['actors','atts','root'],
+  recov:['actors','gov','ns'],
+  list:['actors','escrow','gov','ns','schema','token','disp'],
+  dues:['tgCom','ns','token'],
+  ns:['gov','recov','token'],
+  schema:['gov','ns'],
+  tgOps:['gov','token'], tgCom:['gov','token'],
+  vault:['actors','escrow','token']
+};
+
+var svg = document.getElementById('map');
+var NS = 'http://www.w3.org/2000/svg';
+function el(tag, attrs, parent){ var e=document.createElementNS(NS,tag); for(var k in attrs) e.setAttribute(k, attrs[k]); (parent||svg).appendChild(e); return e; }
+function center(k){ var b=BOXES[k]; return {x:b.x+b.w/2, y:b.y+b.h/2}; }
+function edgePoint(k, toward){ // point on the box edge facing another box
+  var b=BOXES[k], c=center(k), t=center(toward);
+  var dx=t.x-c.x, dy=t.y-c.y;
+  if (Math.abs(dx)*b.h > Math.abs(dy)*b.w) return {x: c.x + Math.sign(dx)*b.w/2, y: c.y + dy*(b.w/2)/Math.abs(dx||1)};
+  return {x: c.x + dx*(b.h/2)/Math.abs(dy||1), y: c.y + Math.sign(dy)*b.h/2};
+}
+
+// layers
+LAYERS.forEach(function(L){
+  el('rect',{x:14,y:L.y,width:972,height:L.h,rx:14,fill:L.fill,'class':'band'});
+  el('text',{x:24,y:L.y+14,'class':'layer'}).textContent=L.label;
+});
+el('text',{x:24,y:560,'class':'layer'}).textContent='OUTSIDE THE CHAIN';
+
+// wires layer (under boxes)
+var wiresG = el('g',{id:'wiresG'});
+Object.keys(WIRES).forEach(function(from){
+  WIRES[from].forEach(function(to){
+    if(!BOXES[to]) return;
+    var a=edgePoint(from,to), b=edgePoint(to,from);
+    el('path',{d:'M'+a.x+','+a.y+' L'+b.x+','+b.y,'class':'wire','data-from':from,'data-to':to}, wiresG);
+  });
+});
+
+// boxes
+var boxEls={};
+Object.keys(BOXES).forEach(function(k){
+  var b=BOXES[k];
+  var g=el('g',{'data-box':k});
+  var r=el('rect',{x:b.x,y:b.y,width:b.w,height:b.h,'class':'box'+(b.ext?' ext':'')},g);
+  el('text',{x:b.x+12,y:b.y+(b.h>44?22:17),'class':'lbl'},g).textContent=b.name;
+  el('text',{x:b.x+12,y:b.y+(b.h>44?40:33),'class':'lbl2'},g).textContent=b.sub;
+  boxEls[k]=r;
+  g.addEventListener('mouseenter',function(){ showWiresFor(k,true); });
+  g.addEventListener('mouseleave',function(){ showWiresFor(k,false); });
+});
+var edgesG = el('g',{id:'edgesG'});
+var dotsG = el('g',{id:'dotsG'});
+
+var wiresToggle=document.getElementById('wires');
+function showWiresFor(k,on){
+  if(wiresToggle.checked) return;
+  Array.prototype.forEach.call(wiresG.children,function(w){
+    if(w.getAttribute('data-from')===k || w.getAttribute('data-to')===k) w.classList.toggle('on',on);
+  });
+}
+wiresToggle.addEventListener('change',function(){
+  Array.prototype.forEach.call(wiresG.children,function(w){ w.classList.toggle('on',wiresToggle.checked); });
+});
+
+// ---------- flows: each step = who calls whom, with what ----------
+// kind: 'money' (token moves) | 'info' (a fact/call) | 'danger' (dispute/veto)
+var FLOWS = [
+ {key:'trade', name:'Protected trade', note:'A Kiambiu buyer pays KES 300 for sukuma. The money sits in escrow until the seller proves delivery; then the waterfall splits it. (docs/05, /19)',
+  steps:[
+   {from:'buyer', to:'escrow', kind:'info', text:'<b>commit</b>(listing, buyer, qty) — a phone-signed intent, relayed by the backend', st:'Committed'},
+   {from:'escrow', to:'vault', kind:'info', text:'escrow asks <b>UserVault.pay</b>(buyer, escrow, 300, nonce, sig) — the buyer\'s own signature over <code>payDigest</code> is checked on-chain'},
+   {from:'vault', to:'escrow', kind:'money', text:'<span class="amt">KES 300</span> moves vault → escrow. Nobody else could have moved it.'},
+   {from:'escrow', to:'list', kind:'info', text:'<b>reserve</b>(listing, qty) — stock is held for this buyer'},
+   {from:'seller', to:'atts', kind:'info', text:'seller <b>attest</b>s fulfilment (schema, SubjectKind.Agreement, id, claimHash)'},
+   {from:'seller', to:'escrow', kind:'info', text:'<b>attestFulfilment</b>(id, attestationId)', st:'Fulfilled'},
+   {from:'buyer', to:'escrow', kind:'info', text:'buyer confirms → <b>settle</b>(id). (Silence? anyone may <b>autoSettle</b> after the window.)', st:'Settled'},
+   {from:'escrow', to:'treas', kind:'money', text:'waterfall 1: protocol fee <span class="amt">KES 4.50</span> (1.5%, hard-capped at 2% in code)'},
+   {from:'escrow', to:'pools', kind:'money', text:'waterfall 2: <b>onSettlement</b> skim to the seller\'s Active funding pool (≤ maxSkimBps) — 0 if none'},
+   {from:'escrow', to:'seller', kind:'money', text:'waterfall 3: seller net <span class="amt">KES 295.50</span> → seller key. <code>SettlementSplit</code> event = the line the app prints.'}
+  ]},
+ {key:'dispute', name:'Dispute branch', note:'Same trade, but the buyer says the sukuma never came. Money stays locked until arbiters reach quorum.',
+  steps:[
+   {from:'buyer', to:'escrow', kind:'danger', text:'<b>raiseDispute</b>(id, evidenceHash) — the chat transcript hash is the evidence', st:'Disputed'},
+   {from:'escrow', to:'disp', kind:'danger', text:'a <b>Case</b>(EscrowSplit) opens for the governance-added arbiters'},
+   {from:'root', to:'disp', kind:'info', text:'arbiters <b>approve</b>(caseId) until <code>dispute.quorum</code>'},
+   {from:'disp', to:'escrow', kind:'info', text:'<b>execute</b> → escrow.<b>resolve</b>(id, toSeller, toBuyer, rationaleHash)', st:'Resolved'},
+   {from:'escrow', to:'buyer', kind:'money', text:'buyer\'s share back to the buyer\'s key'},
+   {from:'escrow', to:'seller', kind:'money', text:'seller\'s share (if any) to the seller\'s key'}
+  ]},
+ {key:'chama', name:'Chama lifecycle', note:'Rules first, then money. Terms are hash-committed before a shilling moves; quorum rules every outflow. (docs/23)',
+  steps:[
+   {from:'member', to:'groups', kind:'info', text:'founder <b>createGroup</b>(termsHash, quorumBps 60%, dissolveBps 80%, shareMode…)'},
+   {from:'member', to:'groups', kind:'info', text:'<b>join</b>(groupId, actor, seenTermsHash) — refused unless the hash equals the group\'s terms: you signed what you read'},
+   {from:'member', to:'groups', kind:'info', text:'<b>contributeFromVault</b>(groupId, actor, 500, nonce, sig)'},
+   {from:'groups', to:'vault', kind:'info', text:'groups asks <b>UserVault.pay</b>(actor, groups, 500…) — same signed-digest rail as escrow'},
+   {from:'vault', to:'groups', kind:'money', text:'<span class="amt">KES 500</span> lands in the group treasury (ledger per member)'},
+   {from:'member', to:'groups', kind:'info', text:'<b>propose</b>(groupId, to, amount, purposeHash) — "buy kits"'},
+   {from:'member', to:'groups', kind:'info', text:'<b>vote</b>(proposalId) × members until quorum (bps of members)'},
+   {from:'groups', to:'seller', kind:'money', text:'<b>execute</b> → the transfer leaves ONLY with quorum. Dissolution (80%) pays everyone by the share formula.'},
+   {from:'root', to:'groups', kind:'money', text:'investor <b>pledge</b> → <b>releaseTranche</b> on their timing → <b>clawback</b> of whatever was never released'}
+  ]},
+ {key:'pool', name:'Funding pool', note:'A verified business raises KES 5,000 chama-style; investors are repaid from every sale until 1.25×. (docs/10, /15)',
+  steps:[
+   {from:'atts', to:'pools', kind:'info', text:'<b>openPool</b> checks the business carries <code>fund.requiredAttestationSchema</code>; cap = baseCap + capStep × repaid history'},
+   {from:'member', to:'pools', kind:'money', text:'investors <b>contribute</b>(poolId, units) — <span class="amt">KES 500</span> per unit, cKES pulled', st:'Raising'},
+   {from:'pools', to:'seller', kind:'money', text:'<b>disburse</b> → <span class="amt">KES 5,000</span> to the business', st:'Active'},
+   {from:'escrow', to:'pools', kind:'money', text:'every later settlement: escrow → <b>onSettlement</b> skim (≤ maxSkimBps) until the cap'},
+   {from:'pools', to:'member', kind:'money', text:'investors <b>claim</b> pro-rata; state → Repaid at 1.25×. Past termEnd under cap → <b>markDefaulted</b>.', st:'Repaid'}
+  ]},
+ {key:'recovery', name:'Lost phone', note:'Recovery without seizure: a new key can be installed after a window, but the CURRENT key can veto — a thief who files first still loses. (docs/13)',
+  steps:[
+   {from:'member', to:'recov', kind:'info', text:'<b>requestUserKeyRotation</b>(actor, newKey, evidenceHash) from the new phone', st:'Pending'},
+   {from:'recov', to:'recov', kind:'info', text:'the clock runs: <code>recovery.userWindow</code>'},
+   {from:'buyer', to:'recov', kind:'danger', text:'if the old key is still in the real owner\'s hand: <b>vetoUserRotation</b> kills the request', st:'Vetoed'},
+   {from:'recov', to:'actors', kind:'info', text:'otherwise anyone <b>executeUserRotation</b> → ActorRegistry.<b>rotateKey</b>', st:'Executed'},
+   {from:'actors', to:'vault', kind:'info', text:'the vault balance now answers to the new key — money was never seizable, only recoverable'},
+   {from:'root', to:'recov', kind:'info', text:'company master keys need the window AND <b>approveMasterResetAsRoot</b>'}
+  ]},
+ {key:'gov', name:'Governance & taps', note:'Parameters change only through a vote and a timelock; treasuries pay out only through queued, rate-limited releases. (docs/09, /19)',
+  steps:[
+   {from:'member', to:'gov', kind:'info', text:'<b>propose</b>(ParamChange, payload, rationaleHash)', st:'Voting'},
+   {from:'atts', to:'gov', kind:'info', text:'<b>vote</b> weight comes from eligibility attestations + <code>gov.minActorAge</code>'},
+   {from:'gov', to:'gov', kind:'info', text:'passed → <b>queue</b> → <code>gov.timelock</code> runs', st:'Queued'},
+   {from:'gov', to:'params', kind:'info', text:'<b>execute</b> → ParamStore.<b>setUint</b>(key, value, rationaleHash) — every contract sees it on its next call', st:'Executed'},
+   {from:'root', to:'tgOps', kind:'info', text:'treasury spend: <b>queue</b>(to, amount, rationale) → delay; guardian may <b>freeze</b>'},
+   {from:'tgOps', to:'seller', kind:'money', text:'<b>release</b> only if the cumulative outflow inside <code>velocity.window</code> (72h) stays under cap'},
+   {from:'root', to:'escrow', kind:'danger', text:'<b>emergencyPause</b>(target, reasonHash) — root only, always with a reason on record'}
+  ]}
+];
+
+// ---------- player ----------
+var flowsEl=document.getElementById('flows'), logEl=document.getElementById('log'), posEl=document.getElementById('pos'), noteEl=document.getElementById('flowNote');
+var cur=FLOWS[0], idx=-1, timer=null;
+FLOWS.forEach(function(f,i){
+  var c=document.createElement('span'); c.className='chip'+(i===0?' on':''); c.textContent=f.name;
+  c.addEventListener('click',function(){ select(f); });
+  flowsEl.appendChild(c);
+});
+function select(f){
+  cur=f; stop(); idx=-1;
+  Array.prototype.forEach.call(flowsEl.children,function(c){ c.classList.toggle('on', c.textContent===f.name); });
+  noteEl.textContent=f.note;
+  render();
+}
+function clearMap(){
+  while(edgesG.firstChild) edgesG.removeChild(edgesG.firstChild);
+  while(dotsG.firstChild) dotsG.removeChild(dotsG.firstChild);
+  Object.keys(boxEls).forEach(function(k){ boxEls[k].classList.remove('active','hot'); });
+}
+function render(){
+  clearMap();
+  logEl.innerHTML='';
+  cur.steps.forEach(function(s,i){
+    var d=document.createElement('div');
+    d.className='step'+(i<idx?' done':'')+(i===idx?' now':'');
+    d.innerHTML=(i+1)+'. '+s.text+(s.st?'<span class="st">'+s.st+'</span>':'');
+    logEl.appendChild(d);
+  });
+  posEl.textContent = idx<0 ? cur.steps.length+' steps' : (idx+1)+' / '+cur.steps.length;
+  if(idx>=0){
+    var s=cur.steps[idx];
+    // mark visited boxes
+    for(var i=0;i<=idx;i++){ boxEls[cur.steps[i].from].classList.add('hot'); boxEls[cur.steps[i].to].classList.add('hot'); }
+    boxEls[s.from].classList.add('active'); boxEls[s.to].classList.add('active');
+    animateEdge(s);
+    var now=logEl.querySelector('.step.now'); if(now) now.scrollIntoView({block:'nearest'});
+  }
+}
+function animateEdge(s){
+  var a=edgePoint(s.from,s.to), b=edgePoint(s.to,s.from);
+  if(s.from===s.to){ // self loop: a small arc
+    var c=center(s.from); a={x:c.x-30,y:BOXES[s.from].y}; b={x:c.x+30,y:BOXES[s.from].y};
+  }
+  var mx=(a.x+b.x)/2, my=(a.y+b.y)/2 - (s.from===s.to?60:Math.min(60,Math.abs(a.x-b.x)*0.18));
+  var d='M'+a.x+','+a.y+' Q'+mx+','+my+' '+b.x+','+b.y;
+  var p=el('path',{d:d,'class':'edge '+s.kind},edgesG);
+  var dot=el('circle',{r:7,'class':'dot '+s.kind},dotsG);
+  var am=el('animateMotion',{dur:'1.4s',repeatCount:'indefinite',path:d},dot);
+  am.beginElement && am.beginElement();
+}
+function step(){ if(idx<cur.steps.length-1){ idx++; render(); } else { stop(); } }
+function play(){ if(timer){ stop(); return; } document.getElementById('play').textContent='❚❚ Pause'; if(idx>=cur.steps.length-1) idx=-1; step(); timer=setInterval(function(){ if(idx>=cur.steps.length-1){ stop(); } else step(); },2200); }
+function stop(){ if(timer){ clearInterval(timer); timer=null; } document.getElementById('play').textContent='▶ Play'; }
+document.getElementById('play').addEventListener('click',play);
+document.getElementById('step').addEventListener('click',function(){ stop(); step(); });
+document.getElementById('reset').addEventListener('click',function(){ stop(); idx=-1; render(); });
+select(FLOWS[0]);
+</script>
+
+<section style="padding:0 24px 40px;max-width:1100px">
+  <h2 style="font-size:18px;margin:8px 0 6px">What is built vs what is planned on this layer</h2>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+    <div class="card" style="padding:14px">
+      <h3 style="margin:0 0 6px;font-size:14px;color:#1b6b3a">BUILT — on a local chain, 146 forge tests</h3>
+      <ul style="margin:0;padding-left:18px;font-size:13.5px;line-height:1.5">
+        <li>The eight primitives + KeyRecovery, DisputeResolver, Governance (3 stages, timelock, pause)</li>
+        <li>UserVault: per-actor custody; every debit needs the actor's own signature over <code>payDigest</code></li>
+        <li>Escrow waterfall with a hard 2% fee ceiling and the funding-pool skim slot</li>
+        <li>CommunityGroups: hash-committed terms, quorum treasuries, dissolution payout, investor tranches with clawback</li>
+        <li>TreasuryGovernor ×2 with the 72h cumulative velocity window and guardian freeze</li>
+        <li>MemberDues; negotiated-price commits with both signatures verified on-chain</li>
+      </ul>
+    </div>
+    <div class="card" style="padding:14px">
+      <h3 style="margin:0 0 6px;font-size:14px;color:#a8641a">PLANNED — next contract iteration</h3>
+      <ul style="margin:0;padding-left:18px;font-size:13.5px;line-height:1.5">
+        <li>UUPS upgradeable proxies behind the governance timelock; full external audit before mainnet</li>
+        <li>Concurrent project pools (<code>activePoolOf</code> becomes a list; skim splits pro-rata)</li>
+        <li>Milestone disbursement: tranches unlock against field-verifier attestations</li>
+        <li>Dispute juror incentives (paid per case from a dispute-fee pool, slashable)</li>
+        <li>Uniqueness / KYC attestation schema with a bonded verifier network</li>
+        <li>Micro-trade batching below <code>microTradeMax</code> (off-chain settle, on-chain batch)</li>
+        <li>Broadcast to Celo Sepolia → mainnet; own CBK-approved KES coin after USDT rails</li>
+      </ul>
+    </div>
+  </div>
+  <h2 style="font-size:18px;margin:22px 0 6px">For the app team — what a UI must be able to show</h2>
+  <div class="card" style="padding:14px;font-size:13.5px;line-height:1.55">
+    <p style="margin:0 0 8px">Every screen is a view over on-chain state. These are the enums and events a standard UI has to render faithfully — never invent a status the chain does not have.</p>
+    <table style="border-collapse:collapse;width:100%">
+      <tr style="text-align:left;color:#66736b"><th style="padding:4px 6px">Thing</th><th style="padding:4px 6px">States / events</th><th style="padding:4px 6px">UI meaning</th></tr>
+      <tr><td style="padding:4px 6px"><b>Agreement</b></td><td style="padding:4px 6px"><code>Committed → Fulfilled → Settled</code> · <code>Disputed → Resolved</code> · <code>Refunded</code></td><td style="padding:4px 6px">an order card; the split line comes from <code>SettlementSplit(fee, skim, net)</code></td></tr>
+      <tr><td style="padding:4px 6px"><b>Listing</b></td><td style="padding:4px 6px"><code>Active · Paused · Closed · Cancelled · Challenged</code></td><td style="padding:4px 6px">a product card; price + coarse cell only, never a street</td></tr>
+      <tr><td style="padding:4px 6px"><b>Pool</b></td><td style="padding:4px 6px"><code>Raising → Active → Repaid</code> · <code>Defaulted · Cancelled</code></td><td style="padding:4px 6px">progress bars: raised/target and repaid/cap (1.25×)</td></tr>
+      <tr><td style="padding:4px 6px"><b>Group</b></td><td style="padding:4px 6px">terms hash, members, treasury, proposals (open/executed/cancelled), pledges</td><td style="padding:4px 6px">rules BEFORE join; quorum % on every money button</td></tr>
+      <tr><td style="padding:4px 6px"><b>Recovery</b></td><td style="padding:4px 6px"><code>Pending → Executed</code> · <code>Vetoed · Cancelled</code></td><td style="padding:4px 6px">a countdown with a big VETO for the current key</td></tr>
+      <tr><td style="padding:4px 6px"><b>Governance</b></td><td style="padding:4px 6px"><code>Voting → Queued → Executed</code> · <code>Rejected · Cancelled</code>; stage ladder</td><td style="padding:4px 6px">proposal pages with the rationale hash resolved to text</td></tr>
+      <tr><td style="padding:4px 6px"><b>Vault</b></td><td style="padding:4px 6px">balance, nonce, daily limit, pending payments (release/cancel)</td><td style="padding:4px 6px">"your money answers to your key" — show the pending window</td></tr>
+    </table>
+    <p style="margin:10px 0 0;color:#66736b">Design rule for every money moment: the buyer sees the total; the seller sees the split. Attestations are facts with an attester and a schema — show who said it and under what schema, never a bare checkmark.</p>
+  </div>
+</section>
+</body>
+</html>

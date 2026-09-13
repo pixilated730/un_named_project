@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>un_named_project — Engine Layer</title>
+<style>
+  :root{--ground:#f7f6f1;--panel:#fff;--line:#dfe3da;--ink:#1d2a22;--ink-soft:#66736b;--accent:#1b6b3a;--accent-soft:#e3efe6;--money:#a8641a;--money-soft:#f6ebdc;--danger:#b3261e;--chain:#2b5fa8;--chain-soft:#e6eefb;
+    --l-app:#f1efe8;--l-engine:#e3efe6;--l-chain:#e6eefb}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--ground);color:var(--ink)}
+  nav{display:flex;gap:14px;align-items:center;padding:10px 24px;border-bottom:1px solid var(--line);background:#fff;font-size:13.5px}
+  nav a{color:var(--ink-soft);text-decoration:none} nav a.on,nav a.brand{color:var(--accent);font-weight:700}
+  header{padding:18px 24px 6px}
+  h1{margin:0;font-size:22px} .sub{color:var(--ink-soft);font-size:13.5px;margin-top:4px}
+  .wrap{display:grid;grid-template-columns:1fr 360px;gap:16px;padding:12px 24px 12px}
+  @media (max-width:980px){.wrap{grid-template-columns:1fr}}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;box-shadow:0 2px 6px rgba(0,0,0,.05)}
+  .map{padding:10px} svg{width:100%;height:auto;display:block}
+  .box{fill:var(--panel);stroke:var(--line);stroke-width:1.2}
+  .box.active{stroke:var(--accent);stroke-width:3} .box.hot{fill:var(--accent-soft)} .box.ext{stroke-dasharray:4 3}
+  .lbl{font-size:12.5px;font-weight:700;fill:var(--ink);pointer-events:none} .lbl2{font-size:10.5px;fill:var(--ink-soft);pointer-events:none}
+  .layer{font-size:11px;font-weight:700;letter-spacing:1.2px;fill:var(--ink-soft)} .band{opacity:.55}
+  .edge{stroke:var(--accent);stroke-width:2.5;fill:none;stroke-linecap:round;stroke-dasharray:6 6;animation:dash 1s linear infinite}
+  .edge.money{stroke:var(--money)} .edge.danger{stroke:var(--danger)}
+  @keyframes dash{to{stroke-dashoffset:-24}}
+  .dot{fill:var(--money);stroke:#fff;stroke-width:2} .dot.info{fill:var(--accent)} .dot.danger{fill:var(--danger)}
+  .side{padding:14px;display:flex;flex-direction:column;gap:10px}
+  .flows{display:flex;flex-wrap:wrap;gap:6px}
+  .chip{border:1px solid var(--line);background:var(--panel);border-radius:16px;padding:6px 11px;font-size:12.5px;cursor:pointer}
+  .chip.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .ctl{display:flex;gap:6px;align-items:center}
+  button{border:0;border-radius:10px;padding:8px 12px;font-weight:700;cursor:pointer;background:var(--accent-soft);color:var(--accent)} button.primary{background:var(--accent);color:#fff}
+  .log{flex:1;min-height:260px;max-height:420px;overflow:auto;border-top:1px solid var(--line);padding-top:8px;font-size:13px;line-height:1.35}
+  .step{padding:7px 8px;border-radius:8px;margin-bottom:4px;color:var(--ink-soft)} .step.now{background:var(--accent-soft);color:var(--ink)} .step.done{color:var(--ink)}
+  .step b{color:var(--accent)} .step .amt{color:var(--money);font-weight:700} .step code{font-size:12px}
+  .step .st{display:inline-block;font-size:11px;background:var(--chain-soft);color:var(--chain);border-radius:8px;padding:1px 6px;margin-left:4px}
+  .note{font-size:12px;color:var(--ink-soft)}
+  .legend{display:flex;gap:12px;font-size:11.5px;color:var(--ink-soft);flex-wrap:wrap;padding:6px 6px 0} .legend i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:4px;vertical-align:middle}
+  section{padding:0 24px 40px;max-width:1100px}
+  section h2{font-size:18px;margin:8px 0 6px} section h3{margin:0 0 6px;font-size:14px}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:16px} @media (max-width:820px){.two{grid-template-columns:1fr}}
+  .pad{padding:14px;font-size:13.5px;line-height:1.55} ul{margin:0;padding-left:18px}
+  table{border-collapse:collapse;width:100%;font-size:13px} th{text-align:left;color:var(--ink-soft);padding:4px 6px} td{padding:4px 6px;vertical-align:top;border-top:1px solid var(--line)}
+  pre{background:#f1f3ee;border-radius:10px;padding:10px;font-size:12px;overflow:auto;margin:6px 0}
+</style>
+</head>
+<body>
+<nav>
+  <a class="brand" href="index.html">un_named_project</a>
+  <span style="color:#c9d1c4">|</span>
+  <a href="index.html">Overview</a>
+  <a href="contracts.html">Contract layer</a>
+  <a class="on" href="engine.html">Engine layer</a>
+  <a href="https://github.com/pixilated730/un_named_project/blob/main/WHITEPAPER.md">White paper</a>
+</nav>
+<header>
+  <h1>The engine layer — how an app talks to the protocol</h1>
+  <div class="sub"><code>protocol-engine</code> (Rust, Apache-2.0): the bridge every approved app backend uses. Typed calls over the primitives, one bootstrap address, sends that cannot wedge, and read models rebuilt from events alone. Pick a flow, press play.</div>
+</header>
+<div class="wrap">
+  <div class="card map">
+    <svg id="map" viewBox="0 0 1000 560" xmlns="http://www.w3.org/2000/svg" aria-label="engine map"></svg>
+    <div class="legend"><span><i style="background:var(--money)"></i>money</span><span><i style="background:var(--accent)"></i>fact / call</span><span><i style="background:var(--danger)"></i>the failure we prevent</span></div>
+  </div>
+  <div class="card side">
+    <div class="flows" id="flows"></div>
+    <div class="ctl"><button class="primary" id="play">▶ Play</button><button id="step">Step</button><button id="reset">Reset</button><span class="note" id="pos"></span></div>
+    <div class="note" id="flowNote"></div>
+    <div class="log" id="log"></div>
+  </div>
+</div>
+
+<section>
+  <h2>What is built vs what is planned on this layer</h2>
+  <div class="two">
+    <div class="card pad">
+      <h3 style="color:var(--accent)">BUILT — 1,184 lines, used by the reference backend</h3>
+      <ul>
+        <li><b>Engine::connect(rpc, key, ParamStore)</b> — one address bootstraps everything; every other contract resolves on-chain through <code>keys::param_key(name)</code></li>
+        <li><b>Typed bindings</b> (alloy <code>sol!</code>) for ParamStore, ActorRegistry, SchemaRegistry, AttestationRegistry, ListingRegistry, AgreementEscrow, FundingPools, NamespaceRegistry, CommunityGroups, UserVault — functions and the events the indexer decodes</li>
+        <li><b>27 mutating calls</b> (register actor, attest, create listing, commit / commitFromVault / commitNegotiated, settle, dispute, refund, open/contribute/disburse/claim pool, vault deposit, group create/join/contribute/propose/vote/execute, meetings…) each serialized behind <code>send_lock</code></li>
+        <li><b>Nonce discipline</b>: fetch-fresh nonces, <code>.call()</code> simulation before every send, one provider per key — the class of "queued-gap" wedges is gone</li>
+        <li><b>Indexer</b>: cursor-based <code>sync()</code>, joins ListingCreated + AgreementCommitted + SettlementSplit into sales books; <code>reputation_of</code>, <code>stats_for_cells</code> (per-territory median prices); rebuilds from block 0 after any restart</li>
+        <li><b>Namespace directory</b>, vault balance/nonce/digest helpers, escrow offer nonces</li>
+      </ul>
+    </div>
+    <div class="card pad">
+      <h3 style="color:var(--money)">PLANNED — next engine iteration</h3>
+      <ul>
+        <li><b>Event streams</b>: <code>start_event_listener()</code> → typed stream so backends push notifications the moment a state changes</li>
+        <li><b>Micro-trade batching</b>: below <code>microTradeMax</code>, settle off-chain and batch on-chain — free small trades that still build history</li>
+        <li><b>FFI bindings</b> (Node via napi, Python via PyO3) so any team's backend can use the engine without Rust</li>
+        <li><b>Multi-chain targets</b>: chain id read at boot; Celo Sepolia → mainnet; address refresh when governance points a ParamStore key elsewhere (UUPS-aware)</li>
+        <li><b>Per-namespace rate limiting</b> and a delegate-key model in the client (capability subsets)</li>
+        <li><b>Pinning helper</b> for the data-availability rule (evidence, rationales, canonical listings)</li>
+        <li><b>Crate rename</b> once the protocol is named; publish to crates.io with the audit</li>
+      </ul>
+    </div>
+  </div>
+
+  <h2 style="margin-top:22px">For the app team — the shapes a UI will consume</h2>
+  <div class="two">
+    <div class="card pad">
+      <h3>1. The intent envelope (how a phone authorises anything)</h3>
+      <p style="margin:0 0 6px;color:var(--ink-soft)">Every mutating action is a small JSON the phone signs with its device key. The backend verifies the signature against <code>ActorRegistry.keyOf(actorId)</code> and only then calls the engine. The UI's job: show the plain-language summary of exactly what is being signed, then sign.</p>
+<pre>{
+  "action":   "Buy",                    // Buy · Settle · CreateListing · JoinGroup · …
+  "actorId":  "0x…32 bytes",
+  "paramsHash": keccak(stableJSON(params)),
+  "nonce":    7,                        // per actor, from GET /nonce
+  "expiresAt": 1788735486,              // ~15 minutes
+  "signature": secp256k1 over
+    "protocol-intent-v1|action|actorId|paramsHash|nonce|expiresAt"
+}</pre>
+      <h3 style="margin-top:10px">2. The vault pay digest (how money leaves a vault)</h3>
+<pre>payDigest = keccak(abi.encode("vault-pay-v1", chainId, vault, actorId, to, amount, nonce))
+// the phone signs THIS; UserVault.pay recovers the signer and checks it == keyOf(actorId)
+// the backend relays the signature — it cannot produce one</pre>
+    </div>
+    <div class="card pad">
+      <h3>3. Read models the indexer hands the UI</h3>
+      <table>
+        <tr><th>Model</th><th>Fields</th><th>Where it shows</th></tr>
+        <tr><td><b>SalesSummary</b></td><td>settledCount · gross · fees · chamaRepaid · net</td><td>the seller's "Business books" card</td></tr>
+        <tr><td><b>SaleRecord</b></td><td>agreementId · listingId · amountLocked · fee · skim · sellerNet · at</td><td>recent sales rows, each with its split</td></tr>
+        <tr><td><b>Reputation</b></td><td>settledTrades · disputeRatePct · repaidPools</td><td>"47 trades · 2.3% disputes" under every seller</td></tr>
+        <tr><td><b>CellStats</b></td><td>per cell set: settled trades · gross volume · median price per unit</td><td>"Market median in Nairobi: KES 45/kg (8 sales)"</td></tr>
+        <tr><td><b>Invariants</b></td><td>[{name, holds, left, right, note}], allHold</td><td>a public audit page; never hide a false</td></tr>
+      </table>
+      <h3 style="margin-top:10px">4. Rules a standard UI must keep</h3>
+      <ul>
+        <li>Never show a status the chain does not have — render the enum, not a guess</li>
+        <li>Money moments show the split (fee · skim · net) exactly as <code>SettlementSplit</code> emitted it</li>
+        <li>An attestation is "who said what, under which schema" — never a bare checkmark</li>
+        <li>Location is a coarse cell or a named place; a street address never appears</li>
+        <li>Rules before money: terms text before a join button, quorum % on every group transfer</li>
+        <li>Anything that moves money has a plain-language confirm sheet and one signature</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<script>
+var BOXES = {
+  phone:  {x:30,  y:60,  w:180,h:54,name:'Phone',            sub:'device key · signs intents',    layer:'app', ext:true},
+  backend:{x:250, y:60,  w:220,h:54,name:'App backend',      sub:'verifies sig · relays · closed', layer:'app', ext:true},
+  db:     {x:510, y:60,  w:200,h:54,name:'App database',     sub:'content only, never money',      layer:'app', ext:true},
+  audit:  {x:750, y:60,  w:220,h:54,name:'/health/invariants',sub:'public audit vs the chain',     layer:'app', ext:true},
+  engine: {x:30,  y:190, w:220,h:54,name:'Engine (client)',  sub:'27 typed calls · send_lock',     layer:'engine'},
+  keys:   {x:290, y:190, w:180,h:54,name:'keys',             sub:'param_key(name) locator',        layer:'engine'},
+  bind:   {x:510, y:190, w:200,h:54,name:'bindings',         sub:'alloy sol! ABI + events',        layer:'engine'},
+  index:  {x:750, y:190, w:220,h:54,name:'Indexer',          sub:'events → books · reputation',   layer:'engine'},
+  rpc:    {x:30,  y:320, w:220,h:54,name:'RPC node',         sub:'anvil · Celo Sepolia · mainnet', layer:'chain', ext:true},
+  params: {x:290, y:320, w:180,h:54,name:'ParamStore',       sub:'the hub',                        layer:'chain'},
+  escrow: {x:510, y:320, w:200,h:54,name:'AgreementEscrow',  sub:'+ Listing · Attestation',        layer:'chain'},
+  vault:  {x:750, y:320, w:220,h:54,name:'UserVault',        sub:'actor balances · payDigest',     layer:'chain'},
+  actors: {x:30,  y:410, w:220,h:54,name:'ActorRegistry',    sub:'actorId → key',                  layer:'chain'},
+  pools:  {x:290, y:410, w:180,h:54,name:'FundingPools',     sub:'skim · claim',                   layer:'chain'},
+  groups: {x:510, y:410, w:200,h:54,name:'CommunityGroups',  sub:'treasuries · pledges',           layer:'chain'},
+  logs:   {x:750, y:410, w:220,h:54,name:'Event log',        sub:'the canonical history',          layer:'chain', ext:true}
+};
+var LAYERS=[
+  {y:36, h:96,  label:'OUTSIDE THE CHAIN — closed apps', fill:'var(--l-app)'},
+  {y:166,h:96,  label:'OPEN ENGINE — protocol-engine crate', fill:'var(--l-engine)'},
+  {y:296,h:186, label:'CHAIN', fill:'var(--l-chain)'}
+];
+var svg=document.getElementById('map'), NS='http://www.w3.org/2000/svg';
+function el(t,a,p){var e=document.createElementNS(NS,t);for(var k in a)e.setAttribute(k,a[k]);(p||svg).appendChild(e);return e;}
+function center(k){var b=BOXES[k];return{x:b.x+b.w/2,y:b.y+b.h/2};}
+function edgePoint(k,toward){var b=BOXES[k],c=center(k),t=center(toward),dx=t.x-c.x,dy=t.y-c.y;
+  if(Math.abs(dx)*b.h>Math.abs(dy)*b.w)return{x:c.x+Math.sign(dx)*b.w/2,y:c.y+dy*(b.w/2)/Math.abs(dx||1)};
+  return{x:c.x+dx*(b.h/2)/Math.abs(dy||1),y:c.y+Math.sign(dy)*b.h/2};}
+LAYERS.forEach(function(L){el('rect',{x:14,y:L.y,width:972,height:L.h,rx:14,fill:L.fill,'class':'band'});el('text',{x:24,y:L.y+14,'class':'layer'}).textContent=L.label;});
+var boxEls={};
+Object.keys(BOXES).forEach(function(k){var b=BOXES[k],g=el('g',{});var r=el('rect',{x:b.x,y:b.y,width:b.w,height:b.h,rx:10,'class':'box'+(b.ext?' ext':'')},g);
+  el('text',{x:b.x+12,y:b.y+22,'class':'lbl'},g).textContent=b.name;el('text',{x:b.x+12,y:b.y+40,'class':'lbl2'},g).textContent=b.sub;boxEls[k]=r;});
+var edgesG=el('g',{}),dotsG=el('g',{});
+
+var FLOWS=[
+ {key:'boot',name:'Bootstrap',note:'One address is all an app needs. Everything else is looked up on-chain, so a redeploy or an upgrade never breaks the SDK.',steps:[
+  {from:'backend',to:'engine',kind:'info',text:'<b>Engine::connect</b>(rpc, operatorKey, <code>ParamStore</code>) — the only address in the app\'s config'},
+  {from:'engine',to:'rpc',kind:'info',text:'provider built with <b>simple nonce management</b> (fetch-fresh) and gas estimation; chain id read at boot'},
+  {from:'engine',to:'keys',kind:'info',text:'<b>param_key</b>("agreementEscrow") = keccak256 — mirrored from <code>P.sol</code>'},
+  {from:'keys',to:'params',kind:'info',text:'<b>paramAddress</b>(key) → the live escrow address; same for token, vault, groups, pools…'},
+  {from:'params',to:'bind',kind:'info',text:'typed <b>bindings</b> attach to the resolved address — functions AND events, from the same ABI'},
+  {from:'engine',to:'backend',kind:'info',text:'ready: <code>engine.create_listing(…)</code>, <code>engine.settle(id)</code> — plain typed calls, no ABI in the app'}
+ ]},
+ {key:'intent',name:'Intent → transaction',note:'A phone-signed intent becomes an on-chain transaction. The backend proves the signature, the engine serializes the send. The red step is the failure class we engineered out.',steps:[
+  {from:'phone',to:'backend',kind:'info',text:'phone signs <code>protocol-intent-v1|Buy|actorId|paramsHash|nonce|expiresAt</code> with its device key'},
+  {from:'backend',to:'actors',kind:'info',text:'backend recovers the signer and checks <b>ActorRegistry.keyOf</b>(actorId) matches — and the nonce is fresh'},
+  {from:'backend',to:'engine',kind:'info',text:'<b>engine.commit</b>(listing, buyer, qty) — a typed call, nothing chain-shaped in the app'},
+  {from:'engine',to:'engine',kind:'info',text:'<b>send_lock</b> acquired: one in-flight send per operator key, however many requests arrive at once'},
+  {from:'engine',to:'rpc',kind:'info',text:'<b>.call()</b> first — simulate; a known-reverting tx never burns a nonce'},
+  {from:'engine',to:'rpc',kind:'info',text:'fresh nonce fetched → tx sent → <b>receipt awaited</b> → lock released', st:'mined'},
+  {from:'rpc',to:'escrow',kind:'money',text:'escrow state moves; <code>AgreementCommitted</code> is emitted for the indexer'},
+  {from:'rpc',to:'engine',kind:'danger',text:'what happened before the lock: two requests raced one cached nonce → a "queued-gap" in the txpool → every later transaction hung. Killed by serialization + fetch-fresh nonces.'}
+ ]},
+ {key:'vaultpay',name:'Vault pay digest',note:'How money leaves a person\'s vault: only on their own signature over a digest the contract recomputes. The backend relays; it cannot spend.',steps:[
+  {from:'phone',to:'phone',kind:'info',text:'phone computes <code>payDigest</code> = keccak(abi.encode("vault-pay-v1", chainId, vault, actorId, to, amount, nonce)) and signs it'},
+  {from:'phone',to:'backend',kind:'info',text:'sends (nonce, v, r, s) inside the Buy intent — two signatures, one tap'},
+  {from:'backend',to:'engine',kind:'info',text:'<b>engine.commit_from_vault</b>(listing, buyer, qty, nonce, v, r, s)'},
+  {from:'engine',to:'escrow',kind:'info',text:'<b>Escrow.commitFromVault</b> → asks the vault to pay itself'},
+  {from:'escrow',to:'vault',kind:'info',text:'<b>UserVault.pay</b>: recomputes the digest, <b>ecrecover</b>s the signer, requires signer == keyOf(actorId), nonce == nonceOf(actorId)'},
+  {from:'vault',to:'escrow',kind:'money',text:'<span class="amt">KES 300</span> vault → escrow. Daily limits and the pending window apply to external destinations.'},
+  {from:'vault',to:'logs',kind:'info',text:'<code>Paid</code> + <code>AgreementCommitted</code> land in the log — the indexer will see both'}
+ ]},
+ {key:'index',name:'Truth from events',note:'Books, reputation and price stats are never stored. The indexer rebuilds them from the event log — from block 0 after any restart — and the audit page compares them to chain balances.',steps:[
+  {from:'index',to:'rpc',kind:'info',text:'<b>sync()</b> from the saved cursor: <code>getLogs</code> over every protocol address'},
+  {from:'logs',to:'index',kind:'info',text:'decode <code>ListingCreated</code>(listing → seller)'},
+  {from:'logs',to:'index',kind:'info',text:'decode <code>AgreementCommitted</code>(agreement → listing, amountLocked)'},
+  {from:'logs',to:'index',kind:'money',text:'decode <code>SettlementSplit</code>(agreement → fee, skim, sellerNet) — the join completes: one <b>SaleRecord</b>'},
+  {from:'index',to:'index',kind:'info',text:'<b>sales_of</b>(seller) → SalesSummary · <b>reputation_of</b>(actor) · <b>stats_for_cells</b>(cells) → median prices per territory'},
+  {from:'index',to:'backend',kind:'info',text:'the backend serves these read models; its own DB holds only content (titles, photos, chat)'},
+  {from:'backend',to:'audit',kind:'info',text:'<b>/health/invariants</b>: Σ vault balances vs token.balanceOf(vault); Σ locks vs escrow; Σ treasuries + pledges vs groups; books-from-events vs DB', st:'allHold'},
+  {from:'audit',to:'rpc',kind:'danger',text:'if any check fails the APP is wrong, not the chain — the page says so in public'}
+ ]},
+ {key:'planned',name:'Planned',note:'The next engine iteration, in the order we expect to build it.',steps:[
+  {from:'logs',to:'backend',kind:'info',text:'<b>Event streams</b>: <code>start_event_listener()</code> → typed stream → push notifications the moment an agreement or proposal changes state'},
+  {from:'backend',to:'engine',kind:'money',text:'<b>Micro-trade batching</b>: below <code>microTradeMax</code> settle off-chain, batch on-chain — free small trades that still build the seller\'s history'},
+  {from:'engine',to:'backend',kind:'info',text:'<b>FFI</b>: Node (napi) and Python (PyO3) bindings so a non-Rust backend gets the same typed calls'},
+  {from:'engine',to:'params',kind:'info',text:'<b>Address refresh</b>: when governance points a key at a new contract (UUPS or redeploy), the client re-resolves without a restart'},
+  {from:'engine',to:'rpc',kind:'info',text:'<b>Multi-chain</b>: Celo Sepolia today, mainnet next; chain id gates the vault digest so a signature never replays across chains'},
+  {from:'backend',to:'db',kind:'info',text:'<b>Pinning helper</b>: evidence, rationales and canonical listings pinned so no hash ever points at nothing'}
+ ]}
+];
+var flowsEl=document.getElementById('flows'),logEl=document.getElementById('log'),posEl=document.getElementById('pos'),noteEl=document.getElementById('flowNote');
+var cur=FLOWS[0],idx=-1,timer=null;
+FLOWS.forEach(function(f,i){var c=document.createElement('span');c.className='chip'+(i===0?' on':'');c.textContent=f.name;c.addEventListener('click',function(){select(f);});flowsEl.appendChild(c);});
+function select(f){cur=f;stop();idx=-1;Array.prototype.forEach.call(flowsEl.children,function(c){c.classList.toggle('on',c.textContent===f.name);});noteEl.textContent=f.note;render();}
+function clearMap(){while(edgesG.firstChild)edgesG.removeChild(edgesG.firstChild);while(dotsG.firstChild)dotsG.removeChild(dotsG.firstChild);Object.keys(boxEls).forEach(function(k){boxEls[k].classList.remove('active','hot');});}
+function render(){clearMap();logEl.innerHTML='';cur.steps.forEach(function(s,i){var d=document.createElement('div');d.className='step'+(i<idx?' done':'')+(i===idx?' now':'');d.innerHTML=(i+1)+'. '+s.text+(s.st?'<span class="st">'+s.st+'</span>':'');logEl.appendChild(d);});
+  posEl.textContent=idx<0?cur.steps.length+' steps':(idx+1)+' / '+cur.steps.length;
+  if(idx>=0){var s=cur.steps[idx];for(var i=0;i<=idx;i++){boxEls[cur.steps[i].from].classList.add('hot');boxEls[cur.steps[i].to].classList.add('hot');}
+    boxEls[s.from].classList.add('active');boxEls[s.to].classList.add('active');animateEdge(s);var now=logEl.querySelector('.step.now');if(now)now.scrollIntoView({block:'nearest'});}}
+function animateEdge(s){var a=edgePoint(s.from,s.to),b=edgePoint(s.to,s.from);
+  if(s.from===s.to){var c=center(s.from);a={x:c.x-30,y:BOXES[s.from].y};b={x:c.x+30,y:BOXES[s.from].y};}
+  var mx=(a.x+b.x)/2,my=(a.y+b.y)/2-(s.from===s.to?60:Math.min(60,Math.abs(a.x-b.x)*0.18));
+  var d='M'+a.x+','+a.y+' Q'+mx+','+my+' '+b.x+','+b.y;
+  el('path',{d:d,'class':'edge '+s.kind},edgesG);var dot=el('circle',{r:7,'class':'dot '+s.kind},dotsG);el('animateMotion',{dur:'1.4s',repeatCount:'indefinite',path:d},dot);}
+function step(){if(idx<cur.steps.length-1){idx++;render();}else{stop();}}
+function play(){if(timer){stop();return;}document.getElementById('play').textContent='❚❚ Pause';if(idx>=cur.steps.length-1)idx=-1;step();timer=setInterval(function(){if(idx>=cur.steps.length-1){stop();}else step();},2400);}
+function stop(){if(timer){clearInterval(timer);timer=null;}document.getElementById('play').textContent='▶ Play';}
+document.getElementById('play').addEventListener('click',play);document.getElementById('step').addEventListener('click',function(){stop();step();});document.getElementById('reset').addEventListener('click',function(){stop();idx=-1;render();});
+select(FLOWS[0]);
+</script>
+</body>
+</html>

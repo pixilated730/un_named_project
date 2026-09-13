@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>un_named_project — architecture</title>
+<style>
+  :root{--ground:#f7f6f1;--panel:#fff;--line:#dfe3da;--ink:#1d2a22;--ink-soft:#66736b;--accent:#1b6b3a;--accent-soft:#e3efe6;--money:#a8641a;--money-soft:#f6ebdc;--chain:#2b5fa8;--chain-soft:#e6eefb;--danger:#b3261e}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--ground);color:var(--ink)}
+  nav{display:flex;gap:14px;align-items:center;padding:10px 24px;border-bottom:1px solid var(--line);background:#fff;font-size:13.5px}
+  nav a{color:var(--ink-soft);text-decoration:none} nav a.on,nav a.brand{color:var(--accent);font-weight:700}
+  .hero{padding:36px 24px 10px;max-width:1100px}
+  h1{margin:0 0 8px;font-size:30px;letter-spacing:.2px}
+  .lede{font-size:16px;color:var(--ink-soft);max-width:760px;line-height:1.5}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;padding:16px 24px 40px;max-width:1100px}
+  @media (max-width:820px){.grid{grid-template-columns:1fr}}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;box-shadow:0 2px 6px rgba(0,0,0,.05);padding:16px}
+  .card h2{margin:0 0 6px;font-size:17px}
+  .card p{margin:0 0 10px;color:var(--ink-soft);font-size:13.5px;line-height:1.5}
+  .card a.btn{display:inline-block;background:var(--accent);color:#fff;text-decoration:none;font-weight:700;border-radius:10px;padding:8px 12px;font-size:13px}
+  .card a.btn.soft{background:var(--accent-soft);color:var(--accent)}
+  .law{margin:6px 24px 0;max-width:1100px;background:var(--accent-soft);border-radius:14px;padding:14px 16px;font-size:14px;line-height:1.5}
+  .law b{color:var(--accent)}
+  svg{width:100%;height:auto;display:block}
+  .box{fill:#fff;stroke:var(--line);stroke-width:1.2}
+  .lbl{font-size:12.5px;font-weight:700;fill:var(--ink)} .lbl2{font-size:10.5px;fill:var(--ink-soft)}
+  .pipe{stroke:var(--accent);stroke-width:2.5;fill:none;stroke-dasharray:7 7;animation:dash 1.2s linear infinite}
+  .pipe.money{stroke:var(--money)}
+  @keyframes dash{to{stroke-dashoffset:-28}}
+  .dot{fill:var(--money);stroke:#fff;stroke-width:2} .dot.fact{fill:var(--accent)}
+  .foot{padding:0 24px 40px;color:var(--ink-soft);font-size:12.5px;max-width:1100px}
+  ul.tight{margin:6px 0 0;padding-left:18px;font-size:13.5px;line-height:1.55}
+</style>
+</head>
+<body>
+<nav>
+  <a class="brand" href="index.html">un_named_project</a>
+  <span style="color:#c9d1c4">|</span>
+  <a class="on" href="index.html">Overview</a>
+  <a href="contracts.html">Contract layer</a>
+  <a href="engine.html">Engine layer</a>
+  <a href="https://github.com/pixilated730/un_named_project/blob/main/WHITEPAPER.md">White paper</a>
+</nav>
+
+<div class="hero">
+  <h1>A trust protocol for Kenya's everyday economy</h1>
+  <div class="lede">Protected trade, chama-style capital, community groups with rules that cannot bend, and reputation nobody can buy — built as a small frozen set of on-chain primitives plus an open engine any approved app can drive. These pages are for the people building on it: what exists, what is planned, and exactly how money and facts move.</div>
+</div>
+
+<div class="law"><b>The one design law:</b> the chain never knows what a "mango" is. No contract names a vertical; a new business type is a schema registration — a transaction, never a deployment. Every other rule on these pages follows from that one.</div>
+
+<div class="grid">
+  <div class="card" style="grid-column:1 / -1">
+    <h2>The whole stack in one picture</h2>
+    <p>A phone signs; an app backend relays through the open engine; the contracts hold every shilling and every fact; the indexer turns the event log back into books and reputation. Nothing the company runs can move user money on its own.</p>
+    <svg viewBox="0 0 1000 250" xmlns="http://www.w3.org/2000/svg" aria-label="stack overview">
+      <rect class="box" x="20" y="90" width="170" height="70" rx="12"/>
+      <text class="lbl" x="36" y="118">Phone</text><text class="lbl2" x="36" y="136">device key · signs intents</text>
+      <rect class="box" x="250" y="90" width="190" height="70" rx="12"/>
+      <text class="lbl" x="266" y="118">App backend</text><text class="lbl2" x="266" y="136">verifies · relays · never initiates</text>
+      <rect class="box" x="500" y="90" width="190" height="70" rx="12" style="stroke:var(--accent);stroke-width:2"/>
+      <text class="lbl" x="516" y="118">protocol-engine</text><text class="lbl2" x="516" y="136">open · Rust · typed calls + indexer</text>
+      <rect class="box" x="750" y="90" width="230" height="70" rx="12" style="stroke:var(--accent);stroke-width:2"/>
+      <text class="lbl" x="766" y="118">Contracts (15)</text><text class="lbl2" x="766" y="136">one hub · four layers · every shilling</text>
+      <path id="p1" class="pipe" d="M190,125 L250,125"/>
+      <path id="p2" class="pipe" d="M440,125 L500,125"/>
+      <path id="p3" class="pipe money" d="M690,125 L750,125"/>
+      <path id="p4" class="pipe" d="M865,160 Q865,215 595,215 Q520,215 520,165"/>
+      <text class="lbl2" x="600" y="238">events → indexer → books · reputation · price stats</text>
+      <circle class="dot fact" r="6"><animateMotion dur="1.6s" repeatCount="indefinite" path="M190,125 L250,125"/></circle>
+      <circle class="dot fact" r="6"><animateMotion dur="1.6s" begin="0.5s" repeatCount="indefinite" path="M440,125 L500,125"/></circle>
+      <circle class="dot" r="6"><animateMotion dur="1.6s" begin="1s" repeatCount="indefinite" path="M690,125 L750,125"/></circle>
+      <circle class="dot fact" r="6"><animateMotion dur="3s" repeatCount="indefinite" path="M865,160 Q865,215 595,215 Q520,215 520,165"/></circle>
+      <text class="lbl2" x="40" y="60">OUTSIDE THE CHAIN — closed apps</text>
+      <text class="lbl2" x="500" y="60">OPEN PROTOCOL — Apache-2.0</text>
+      <line x1="470" y1="40" x2="470" y2="200" stroke="#c9d1c4" stroke-dasharray="4 4"/>
+    </svg>
+  </div>
+
+  <div class="card">
+    <h2>Contract layer</h2>
+    <p>Fifteen contracts in four layers, wired through a single hub so any one of them can be replaced with one parameter change. Six playable flows: a protected trade and its waterfall, the dispute branch, a chama's whole lifecycle, a funding pool, a lost phone, and governance with its money taps.</p>
+    <a class="btn" href="contracts.html">Open the animated contract map →</a>
+  </div>
+  <div class="card">
+    <h2>Engine layer</h2>
+    <p>The open Rust bridge every app uses. Five playable flows: bootstrap from one address, how a phone-signed intent becomes a transaction (and the nonce wedge we killed), the vault-pay digest, truth rebuilt from events, and the planned event streams and batching.</p>
+    <a class="btn" href="engine.html">Open the animated engine map →</a>
+  </div>
+
+  <div class="card">
+    <h2>Built (on a local chain today)</h2>
+    <ul class="tight">
+      <li>15 contracts · 146 forge tests · reference backend + reference app</li>
+      <li>Escrow with a 2% fee ceiling in code; funding-pool skim; negotiated commits</li>
+      <li>Per-person vaults (recoverable, not seizable); community groups with quorum treasuries</li>
+      <li>Nine end-to-end suites; live invariants audit that refuses to trust the database over the chain</li>
+    </ul>
+  </div>
+  <div class="card">
+    <h2>Planned</h2>
+    <ul class="tight">
+      <li>Testnet broadcast (Celo Sepolia) → audit → mainnet behind UUPS + timelock</li>
+      <li>Concurrent project pools; milestone tranches unlocked by field attestations</li>
+      <li>Dispute juror incentives; uniqueness/KYC attestation network</li>
+      <li>Engine: event-stream push, micro-trade batching, FFI, multi-chain</li>
+    </ul>
+    <p style="margin-top:8px"><a class="btn soft" href="https://github.com/pixilated730/un_named_project/blob/main/WHITEPAPER.md">Read the white paper</a></p>
+  </div>
+</div>
+<div class="foot">These pages are self-contained and work offline. Every arrow on the contract and engine maps corresponds to a real function in the protocol source. Documents: CC BY 4.0.</div>
+</body>
+</html>
